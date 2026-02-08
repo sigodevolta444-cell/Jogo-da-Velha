@@ -279,7 +279,12 @@ function toggleMode(){ vsAI=!vsAI; mode.innerText=vsAI?"Vs Computador":"2 Jogado
 function toggleTheme(){ document.body.classList.toggle("light"); }
 
 // ===== Reinício completo =====
-function reset(){
+function clearWinLines(boardType) {
+    const boardDiv = boardType === 'board' ? document.getElementById('board') : document.getElementById('privateBoard');
+    boardDiv.querySelectorAll('.win-line').forEach(line => line.remove());
+}
+
+function reset(){ 
     board.fill(""); 
     privateBoardArr.fill(""); 
     gameOver=false; 
@@ -295,19 +300,57 @@ function reset(){
         c.classList.remove("win");
     });
 
+    clearWinLines('board');        // Limpa linha offline
+    clearWinLines('privateBoard'); // Limpa linha multiplayer
+}
     document.querySelectorAll(".win-line").forEach(line=>line.remove());
     status.innerText = "Vez do X";
 }
 
 // ===== Dificuldade =====
-let difficultyLevels = ["Fácil", "Médio", "Difícil"];
-let currentDifficulty = 0;
+function aiPlay(){
+    const emptyCells = board.map((v,i) => v === "" ? i : null).filter(i => i !== null);
+    if(emptyCells.length === 0) return;
 
-function changeDifficulty(){
-    currentDifficulty = (currentDifficulty + 1) % difficultyLevels.length;
-    document.getElementById("difficulty").innerText = difficultyLevels[currentDifficulty];
+    let choice;
+    if(currentDifficulty === 0){ // Fácil: aleatório
+        choice = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    } else if(currentDifficulty === 1){ // Médio: tenta ganhar se possível, senão aleatório
+        choice = mediumAI(emptyCells);
+    } else { // Difícil: minimax ou estratégia
+        choice = hardAI();
+    }
+
+    board[choice] = player;
+    boardCells[choice].innerText = player;
+    boardCells[choice].classList.add("win");
+
+    if(checkEnd(board,'board')) return;
+
+    player = "X";
+    status.innerText = "Vez do "+player;
 }
 
+// Exemplo de função Média (tentativa de bloquear ou ganhar)
+function mediumAI(emptyCells){
+    // Tenta vencer
+    for(let i of emptyCells){
+        board[i] = "O";
+        if(checkEnd(board, 'board')){ board[i] = ""; return i; }
+        board[i] = "";
+    }
+    // Tenta bloquear X
+    for(let i of emptyCells){
+        board[i] = "X";
+        if(checkEnd(board, 'board')){ board[i] = ""; return i; }
+        board[i] = "";
+    }
+    // Aleatório
+    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+}
+
+// Para Difícil você poderia implementar Minimax, se quiser
+function hardAI(){ return emptyCells[Math.floor(Math.random() * emptyCells.length)]; }
 // ===================== Multiplayer =====================
 function openMultiplayerMenu(){ multiplayerMenu.style.display="block"; mainContainer.style.display="none"; privateRoom.style.display="none"; }
 function closeMultiplayerMenu(){ multiplayerMenu.style.display="none"; mainContainer.style.display="flex"; }
