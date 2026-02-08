@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jogo da Velha Pro - Multiplayer</title>
+<title>Jogo da Velha Pro</title>
 
 <style>
 :root {
@@ -13,7 +13,13 @@
     --text: #fff;
     --btn: #0066ff;
 }
-.light { --bg:#f2f2f2; --card:#fff; --cell:#ddd; --text:#000; }
+
+.light {
+    --bg: #f2f2f2;
+    --card: #fff;
+    --cell: #ddd;
+    --text: #000;
+}
 
 body {
     margin: 0;
@@ -24,6 +30,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    position: relative;
 }
 
 .container {
@@ -36,17 +43,15 @@ body {
     position: relative;
 }
 
-.developer {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    font-size: 12px;
-    color: #ccc;
+h2 {
+    font-size: 28px;
+    margin-top: 0;
 }
 
-h2 { font-size: 28px; margin-top: 0; }
-
-#status { font-size: 22px; margin-bottom: 14px; }
+#status {
+    font-size: 22px;
+    margin-bottom: 14px;
+}
 
 .board {
     display: grid;
@@ -67,8 +72,12 @@ h2 { font-size: 28px; margin-top: 0; }
     cursor: pointer;
 }
 
-.cell.win { background: #00c853; color: white; }
+.cell.win {
+    background: #00c853;
+    color: white;
+}
 
+/* Botões gerais */
 button {
     width: 100%;
     padding: 18px;
@@ -81,47 +90,59 @@ button {
     cursor: pointer;
 }
 
-.score { font-size: 18px; margin-top: 18px; }
-
-#multiplayerPanel {
-    display: none;
-    margin-top: 14px;
-}
-#roomId {
-    margin-top: 8px;
-    font-size: 14px;
-    color: #ccc;
-    word-break: break-all;
-}
+/* Botão multiplayer pequeno e fixo */
 #multiplayerBtn {
-    position: absolute;
+    position: fixed;
     top: 16px;
     left: 16px;
-    padding: 8px 12px;
+    width: 120px;
+    padding: 10px;
     font-size: 14px;
     border-radius: 12px;
+    z-index: 999;
+}
+
+/* Menu multiplayer */
+#multiplayerMenu {
+    display: none;
+    background: var(--card);
+    padding: 24px;
+    border-radius: 24px;
+    text-align: center;
+}
+
+#roomId {
+    margin-top: 12px;
+    font-size: 16px;
+    color: #fff;
+}
+
+.score {
+    font-size: 18px;
+    margin-top: 18px;
+}
+
+.developer {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 12px;
+    color: #ccc;
 }
 </style>
 </head>
 
 <body>
-<div class="container">
+
+<!-- Botão Multiplayer fixo -->
+<button id="multiplayerBtn" onclick="openMultiplayerMenu()">Multiplayer</button>
+
+<div class="container" id="mainContainer">
     <h2>Jogo da Velha</h2>
     <div class="developer">Desenvolvido por Gabriel Morito</div>
-
-    <button id="multiplayerBtn">Multiplayer</button>
-
-    <div id="multiplayerPanel">
-        <button onclick="createRoom()">Criar Sala</button>
-        <button onclick="joinRoom()">Entrar Sala</button>
-        <button id="restartRoomBtn" style="display:none" onclick="restartRoom()">Reiniciar</button>
-        <button id="leaveRoomBtn" style="display:none" onclick="leaveRoom()">Sair da Sala</button>
-        <div id="roomId"></div>
-    </div>
-
     <div id="status">Vez do X</div>
 
-    <div class="board">
+    <div class="board" id="board">
         <div class="cell" onclick="play(0)"></div>
         <div class="cell" onclick="play(1)"></div>
         <div class="cell" onclick="play(2)"></div>
@@ -133,195 +154,146 @@ button {
         <div class="cell" onclick="play(8)"></div>
     </div>
 
-    <button onclick="toggleMode()">Modo: <span id="mode">2 Jogadores</span></button>
-    <button id="difficultyBtn" onclick="changeDifficulty()" style="display:none">Dificuldade: <span id="difficulty">Fácil</span></button>
-    <button onclick="toggleTheme()">Tema Claro / Escuro</button>
-    <button onclick="reset()">Reiniciar</button>
+    <div id="gameMenu">
+        <button onclick="toggleMode()">Modo: <span id="mode">2 Jogadores</span></button>
+        <button id="difficultyBtn" onclick="changeDifficulty()" style="display:none">
+            Dificuldade: <span id="difficulty">Fácil</span>
+        </button>
+        <button onclick="toggleTheme()">Tema Claro / Escuro</button>
+        <button onclick="reset()">Reiniciar</button>
+    </div>
+
+    <!-- Menu Multiplayer -->
+    <div id="multiplayerMenu">
+        <button onclick="createRoom()">Criar Partida</button>
+        <button onclick="joinRoom()">Entrar Partida</button>
+        <div id="roomId"></div>
+        <button onclick="resetRoom()" id="resetRoomBtn" style="display:none">Reiniciar</button>
+        <button onclick="exitRoom()" id="exitRoomBtn" style="display:none">Sair da Sala</button>
+    </div>
 
     <div class="score" id="scoreDiv"></div>
 </div>
 
-<!-- ===== Parse SDK ===== -->
-<script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
-
 <script>
-/* ====== CONFIGURAÇÃO PARSE ====== */
-Parse.initialize("e8nEnz0sw5ezqx09VktYY87vG6DsjP4jhZt9fUbQ","GZD0QLNLrVJhhVZ8k9OjkdVrmaWmk9THRuleYfVD");
-Parse.serverURL = 'https://parseapi.back4app.com';
-
-/* ====== ELEMENTOS ====== */
+/* ===== ELEMENTOS ===== */
 const status = document.getElementById("status");
 const mode = document.getElementById("mode");
 const scoreDiv = document.getElementById("scoreDiv");
 const cells = document.getElementsByClassName("cell");
-const multiplayerBtn = document.getElementById("multiplayerBtn");
-const multiplayerPanel = document.getElementById("multiplayerPanel");
-const roomIdDiv = document.getElementById("roomId");
-const restartRoomBtn = document.getElementById("restartRoomBtn");
-const leaveRoomBtn = document.getElementById("leaveRoomBtn");
+const gameMenu = document.getElementById("gameMenu");
+const multiplayerMenu = document.getElementById("multiplayerMenu");
+const roomIdDisplay = document.getElementById("roomId");
+const resetRoomBtn = document.getElementById("resetRoomBtn");
+const exitRoomBtn = document.getElementById("exitRoomBtn");
 
-/* ====== ESTADO ====== */
+/* ===== ESTADO ===== */
 let board = Array(9).fill("");
 let player = "X";
 let gameOver = false;
 let vsAI = false;
 let lock = false;
-
+let difficulties = ["Fácil", "Médio", "Difícil"];
+let difficultyIndex = 0;
 let score = JSON.parse(localStorage.getItem("score")) || {X:0,O:0,E:0};
 
 /* Multiplayer */
-let currentRoom = null;
-let isCreator = false;
-let pollInterval = null;
+let inRoom = false;
+let currentRoomId = "";
 
-const wins = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-];
-
-/* ====== FUNÇÕES JOGO ====== */
-function play(i) {
+/* ===== FUNÇÕES ===== */
+function play(i){
     if(lock || board[i] || gameOver) return;
-
-    board[i] = player;
-    cells[i].innerText = player;
-
-    if(currentRoom){
-        updateRoomBoard();
-    }
-
+    move(i, player);
     if(checkEnd()) return;
-
     player = player === "X" ? "O" : "X";
     status.innerText = "Vez do " + player;
 }
 
-function checkEnd() {
+function move(i,p){ board[i]=p; cells[i].innerText=p; }
+
+function checkEnd(){
+    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
     for(let c of wins){
-        if(c.every(i => board[i]===player)){
-            status.innerText = player + " venceu!";
-            highlight(c);
-            gameOver = true;
+        if(c.every(i=>board[i]===player)){
+            status.innerText = player+" venceu!";
+            score[player]++; saveScore();
+            c.forEach(i=>cells[i].classList.add("win"));
+            gameOver=true; lock=false;
             return true;
         }
     }
     if(!board.includes("")){
-        status.innerText = "Empate!";
-        gameOver = true;
-        return true;
+        status.innerText="Empate!"; score.E++; saveScore();
+        gameOver=true; lock=false; return true;
     }
     return false;
 }
 
-function highlight(cellsWin){
-    cellsWin.forEach(i => cells[i].classList.add("win"));
-}
-
 function reset(){
-    board.fill("");
-    gameOver=false;
-    player="X";
-    status.innerText="Vez do X";
-    Array.from(cells).forEach(c=>{c.innerText=""; c.classList.remove("win");});
+    board.fill(""); gameOver=false; lock=false; player="X";
+    Array.from(cells).forEach(c=>{ c.innerText=""; c.classList.remove("win"); });
+    status.innerText = "Vez do X";
 }
 
-/* ====== BOTÕES ====== */
+/* ===== MENU ===== */
 function toggleMode(){
     vsAI = !vsAI;
-    mode.innerText = vsAI ? "Vs Computador" : "2 Jogadores";
-    document.getElementById("difficultyBtn").style.display = vsAI ? "block":"none";
+    mode.innerText = vsAI ? "Vs Computador":"2 Jogadores";
+    document.getElementById("difficultyBtn").style.display = vsAI?"block":"none";
     reset();
 }
+
 function changeDifficulty(){
     difficultyIndex = (difficultyIndex+1)%difficulties.length;
     document.getElementById("difficulty").innerText=difficulties[difficultyIndex];
     reset();
 }
-function toggleTheme(){ document.body.classList.toggle("light"); }
-function saveScore(){ localStorage.setItem("score",JSON.stringify(score)); updateScore(); }
-function updateScore(){ scoreDiv.innerText = `X: ${score.X} | O: ${score.O} | Empates: ${score.E}`; }
 
-/* ====== MULTIPLAYER ====== */
-multiplayerBtn.addEventListener("click", ()=>{
-    multiplayerPanel.style.display = multiplayerPanel.style.display==="block"?"none":"block";
-});
-
-async function createRoom(){
-    const GameRoom = Parse.Object.extend("GameRoom");
-    const room = new GameRoom();
-    room.set("board", Array(9).fill(""));
-    room.set("turn","X");
-    room.set("finished",false);
-    await room.save();
-    currentRoom = room;
-    isCreator = true;
-    roomIdDiv.innerText = "Sala ID: "+room.id;
-    restartRoomBtn.style.display="block";
-    leaveRoomBtn.style.display="block";
-    startPolling();
+function toggleTheme(){
+    document.body.classList.toggle("light");
 }
 
-async function joinRoom(){
+/* ===== SCORE ===== */
+function saveScore(){ localStorage.setItem("score",JSON.stringify(score)); updateScore();}
+function updateScore(){ scoreDiv.innerText=`X: ${score.X} | O: ${score.O} | Empates: ${score.E}`;}
+
+/* ===== MULTIPLAYER ===== */
+function openMultiplayerMenu(){
+    gameMenu.style.display="none";
+    multiplayerMenu.style.display="block";
+}
+
+function createRoom(){
+    inRoom = true;
+    currentRoomId = "ROOM-"+Math.floor(Math.random()*9000+1000);
+    roomIdDisplay.innerText = "ID da Sala: "+currentRoomId;
+    resetRoomBtn.style.display="block";
+    exitRoomBtn.style.display="block";
+}
+
+function joinRoom(){
     const id = prompt("Digite o ID da sala:");
-    if(!id) return;
-    const query = new Parse.Query("GameRoom");
-    try{
-        const room = await query.get(id);
-        currentRoom = room;
-        isCreator = false;
-        roomIdDiv.innerText = "Sala ID: "+room.id;
-        leaveRoomBtn.style.display="block";
-        board = room.get("board");
-        updateBoardUI();
-        startPolling();
-    }catch(e){ alert("Sala não encontrada"); }
+    if(id){
+        inRoom=true; currentRoomId=id;
+        roomIdDisplay.innerText="Entrou na Sala: "+id;
+        resetRoomBtn.style.display="block";
+        exitRoomBtn.style.display="block";
+    }
 }
 
-async function updateRoomBoard(){
-    if(!currentRoom) return;
-    currentRoom.set("board", board);
-    currentRoom.set("turn", player==="X"?"O":"X");
-    await currentRoom.save();
+function resetRoom(){
+    reset();
 }
 
-function updateBoardUI(){
-    board.forEach((v,i)=>cells[i].innerText=v);
-}
-
-async function restartRoom(){
-    if(!currentRoom || !isCreator) return;
-    board = Array(9).fill("");
-    currentRoom.set("board", board);
-    currentRoom.set("turn","X");
-    currentRoom.set("finished",false);
-    await currentRoom.save();
-    updateBoardUI();
-}
-
-async function leaveRoom(){
-    if(pollInterval) clearInterval(pollInterval);
-    currentRoom=null;
-    isCreator=false;
-    board=Array(9).fill("");
-    updateBoardUI();
-    roomIdDiv.innerText="";
-    restartRoomBtn.style.display="none";
-    leaveRoomBtn.style.display="none";
-    multiplayerPanel.style.display="none";
-}
-
-/* Polling básico para atualizar o tabuleiro */
-function startPolling(){
-    if(pollInterval) clearInterval(pollInterval);
-    pollInterval = setInterval(async ()=>{
-        if(!currentRoom) return;
-        await currentRoom.fetch();
-        board = currentRoom.get("board");
-        updateBoardUI();
-        const turn = currentRoom.get("turn");
-        player = turn;
-    }, 1000);
+function exitRoom(){
+    inRoom=false; currentRoomId="";
+    multiplayerMenu.style.display="none";
+    gameMenu.style.display="block";
+    roomIdDisplay.innerText="";
+    resetRoomBtn.style.display="none";
+    exitRoomBtn.style.display="none";
+    reset();
 }
 </script>
 
