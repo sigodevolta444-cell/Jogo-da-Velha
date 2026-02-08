@@ -243,13 +243,21 @@ function showWinLine(cells, boardType) {
 // ===================== Jogo offline =====================
 function play(i){
     if(lock || board[i] || gameOver) return;
+
     board[i] = player;
     boardCells[i].innerText = player;
-    if(checkEnd(board,'board')) return;
-    player = player==="X"?"O":"X";
-    status.innerText = "Vez do "+player;
-}
 
+    if(checkEnd(board,'board')) return;
+
+    if(vsAI && player === "X"){ 
+        player = "O"; // vez da IA
+        status.innerText = "Vez do O";
+        setTimeout(aiPlay, 300); // chama IA com atraso de 300ms
+    } else {
+        player = player==="X"?"O":"X";
+        status.innerText = "Vez do "+player;
+    }
+}
 function checkEnd(b, boardType){
     for(let c of wins){
         if(c.every(i=>b[i]===player)){
