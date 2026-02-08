@@ -308,27 +308,48 @@ function reset(){
 }
 
 // ===== Dificuldade =====
-function aiPlay(){
+    function aiPlay(){
+    if(gameOver) return;
+
     const emptyCells = board.map((v,i) => v === "" ? i : null).filter(i => i !== null);
     if(emptyCells.length === 0) return;
 
     let choice;
     if(currentDifficulty === 0){ // Fácil: aleatório
         choice = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-    } else if(currentDifficulty === 1){ // Médio: tenta ganhar se possível, senão aleatório
+    } else if(currentDifficulty === 1){ // Médio
         choice = mediumAI(emptyCells);
-    } else { // Difícil: minimax ou estratégia
-        choice = hardAI();
+    } else { // Difícil
+        choice = hardAI(emptyCells);
     }
 
-    board[choice] = player;
-    boardCells[choice].innerText = player;
-    boardCells[choice].classList.add("win");
+    board[choice] = "O"; // IA sempre joga O
+    boardCells[choice].innerText = "O";
 
-    if(checkEnd(board,'board')) return;
+    if(checkEnd(board,'board')) return; // checa vitória ou empate
 
-    player = "X";
+    player = "X"; // volta para o humano
     status.innerText = "Vez do "+player;
+}
+
+// Média: tenta vencer, depois bloquear, senão aleatório
+function mediumAI(emptyCells){
+    for(let i of emptyCells){
+        board[i] = "O";
+        if(checkEnd(board,'board')){ board[i] = ""; return i; }
+        board[i] = "";
+    }
+    for(let i of emptyCells){
+        board[i] = "X";
+        if(checkEnd(board,'board')){ board[i] = ""; return i; }
+        board[i] = "";
+    }
+    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+}
+
+// Difícil: usa aleatório como placeholder (você pode implementar Minimax depois)
+function hardAI(emptyCells){
+    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
 }
 
 // Exemplo de função Média (tentativa de bloquear ou ganhar)
