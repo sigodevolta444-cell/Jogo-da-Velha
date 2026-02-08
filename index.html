@@ -47,7 +47,7 @@ body {
 }
 h2 { font-size: 28px; margin-top: 0; }
 #status { font-size: 22px; margin-bottom: 14px; }
-.board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+.board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; position: relative; }
 .cell { height: 120px; background: var(--cell); border-radius: 20px; font-size: 48px; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: pointer; }
 .cell.win { background: #00c853; color: white; }
 button { width: 100%; padding: 18px; margin-top: 14px; border: none; border-radius: 18px; background: var(--btn); color: white; font-size: 18px; cursor: pointer; }
@@ -97,6 +97,22 @@ button { width: 100%; padding: 18px; margin-top: 14px; border: none; border-radi
     max-width: 520px;
 }
 #playerList { margin-top: 12px; text-align: left; max-height: 120px; overflow-y: auto; background: #333; padding: 8px; border-radius: 12px; }
+
+/* ======= Linha de Vitória Animada ======= */
+.win-line {
+    position: absolute;
+    background: #00c853;
+    transform-origin: left center;
+    height: 6px;
+    width: 0;
+    animation: drawLine 0.5s forwards;
+    border-radius: 3px;
+    z-index: 10;
+}
+@keyframes drawLine {
+    from { width: 0; }
+    to { width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -168,8 +184,6 @@ const scoreDiv = document.getElementById("scoreDiv");
 const mainContainer = document.getElementById("mainContainer");
 const multiplayerMenu = document.getElementById("multiplayerMenu");
 const privateRoom = document.getElementById("privateRoom");
-const createRoomBtn = document.getElementById("createRoomBtn");
-const joinRoomBtn = document.getElementById("joinRoomBtn");
 const roomIdSpan = document.getElementById("roomId");
 const restartBtn = document.getElementById("restartBtn");
 const playerListDiv = document.getElementById("playerList");
@@ -195,17 +209,45 @@ const wins = [
 let score = JSON.parse(localStorage.getItem("score")) || {X:0,O:0,E:0};
 updateScore();
 
+// ===== Função da linha de vitória =====
+function showWinLine(cells, boardType) {
+    const boardDiv = boardType === 'board' ? document.getElementById('board') : document.getElementById('privateBoard');
+    const firstCell = boardDiv.children[cells[0]];
+    const lastCell = boardDiv.children[cells[2]];
+
+    const line = document.createElement('div');
+    line.classList.add('win-line');
+
+    const rect1 = firstCell.getBoundingClientRect();
+    const rect2 = lastCell.getBoundingClientRect();
+    const boardRect = boardDiv.getBoundingClientRect();
+
+    const x1 = rect1.left + rect1.width/2 - boardRect.left;
+    const y1 = rect1.top + rect1.height/2 - boardRect.top;
+    const x2 = rect2.left + rect2.width/2 - boardRect.left;
+    const y2 = rect2.top + rect2.height/2 - boardRect.top;
+
+    const length = Math.hypot(x2-x1, y2-y1);
+    const angle = Math.atan2(y2-y1, x2-x1) * 180/Math.PI;
+
+    line.style.width = length + 'px';
+    line.style.transform = `rotate(${angle}deg)`;
+    line.style.top = y1 + 'px';
+    line.style.left = x1 + 'px';
+    boardDiv.appendChild(line);
+}
+
 // ===================== Jogo offline =====================
 function play(i){
     if(lock || board[i] || gameOver) return;
     board[i] = player;
     boardCells[i].innerText = player;
-    if(checkEnd(board)) return;
+    if(checkEnd(board,'board')) return;
     player = player==="X"?"O":"X";
     status.innerText = "Vez do "+player;
 }
 
-function checkEnd(b){
+function checkEnd(b, boardType){
     for(let c of wins){
         if(c.every(i=>b[i]===player)){
             status.innerText = player+" venceu!";
@@ -213,6 +255,7 @@ function checkEnd(b){
             saveScore();
             gameOver=true;
             lock=false;
+            showWinLine(c, boardType); // <<< chama a animação da linha
             return true;
         }
     }
@@ -269,7 +312,7 @@ function playPrivate(i){
     if(privateBoardArr[i] || gameOver) return;
     privateBoardArr[i] = player;
     privateCells[i].innerText = player;
-    if(checkEnd(privateBoardArr)) return;
+    if(checkEnd(privateBoardArr,'privateBoard')) return;
     player = player==="X"?"O":"X";
     status.innerText="Vez do "+player;
 }
