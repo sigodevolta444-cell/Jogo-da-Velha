@@ -298,37 +298,64 @@ function reset(){
     status.innerText='Vez do X';
 }
 
-// ===== IA =====
-function aiPlay(){
-    if(gameOver) return;
-    const emptyCells = board.map((v,i)=>v===''?i:null).filter(i=>i!==null);
-    if(emptyCells.length===0) return;
-    let choice;
-    if(currentDifficulty===0){ // Fácil
-        choice = emptyCells[Math.floor(Math.random()*emptyCells.length)];
-    } else if(currentDifficulty===1){ // Médio
-        choice = mediumAI(emptyCells);
-    } else { // Difícil (Minimax pode ser adicionado)
-        choice = hardAI(emptyCells);
-    }
-    board[choice]='O'; boardCells[choice].innerText='O';
-    if(checkEnd(board,'board')) return;
-    player='X'; status.innerText='Vez do X';
+// ===== Difícil (Minimax) =====
+function hardAI() {
+    const bestMove = minimax(board, "O").index;
+    return bestMove; // Retorna o índice para aiPlay usar
 }
 
-function mediumAI(empty){
-    for(let i of empty){
-        board[i]='O'; if(checkEnd(board,'board')){board[i]=''; return i;} board[i]='';
+// Função Minimax
+function minimax(newBoard, currentPlayer) {
+    const availSpots = newBoard.map((v,i) => v === "" ? i : null).filter(i => i !== null);
+
+    // Checa vitória
+    if(checkWin(newBoard, "X")) return {score: -10};
+    if(checkWin(newBoard, "O")) return {score: 10};
+    if(availSpots.length === 0) return {score: 0};
+
+    const moves = [];
+
+    for(let i = 0; i < availSpots.length; i++) {
+        const move = {};
+        move.index = availSpots[i];
+        newBoard[availSpots[i]] = currentPlayer;
+
+        if(currentPlayer === "O") {
+            const result = minimax(newBoard, "X");
+            move.score = result.score;
+        } else {
+            const result = minimax(newBoard, "O");
+            move.score = result.score;
+        }
+
+        newBoard[availSpots[i]] = "";
+        moves.push(move);
     }
-    for(let i of empty){
-        board[i]='X'; if(checkEnd(board,'board')){board[i]=''; return i;} board[i]='';
+
+    let bestMove;
+    if(currentPlayer === "O") {
+        let bestScore = -Infinity;
+        for(let i=0;i<moves.length;i++){
+            if(moves[i].score > bestScore){ bestScore = moves[i].score; bestMove = moves[i]; }
+        }
+    } else {
+        let bestScore = Infinity;
+        for(let i=0;i<moves.length;i++){
+            if(moves[i].score < bestScore){ bestScore = moves[i].score; bestMove = moves[i]; }
+        }
     }
-    return empty[Math.floor(Math.random()*empty.length)];
-}
-function hardAI(empty){
-    return empty[Math.floor(Math.random()*empty.length)];
+
+    return bestMove;
 }
 
+// Função para verificar vitória dentro do Minimax
+function checkWin(boardToCheck, playerToCheck){
+    return [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ].some(line => line.every(i => boardToCheck[i] === playerToCheck));
+}
 // ===== Multiplayer =====
 function openMultiplayerMenu(){ multiplayerMenu.style.display='block'; mainContainer.style.display='none'; privateRoom.style.display='none'; }
 function closeMultiplayerMenu(){ multiplayerMenu.style.display='none'; mainContainer.style.display='flex'; }
