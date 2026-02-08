@@ -56,24 +56,23 @@ h2 { font-size: 28px; margin-top: 0; }
 .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
 .cell { height: 120px; background: var(--cell); border-radius: 20px; font-size: 48px; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: pointer; }
 .cell.win { background: #00c853; color: white; }
-button { width: 100%; padding: 14px; margin-top: 12px; border: none; border-radius: 18px; background: var(--btn); color: white; font-size: 16px; cursor: pointer; }
+button { width: 100%; padding: 18px; margin-top: 14px; border: none; border-radius: 18px; background: var(--btn); color: white; font-size: 18px; cursor: pointer; }
 .score { font-size: 18px; margin-top: 18px; }
 
-/* Botão multiplayer fixo */
+/* Botão multiplayer canto superior esquerdo */
 #multiplayerBtn {
-    position: fixed;
+    position: absolute;
     top: 16px;
     left: 16px;
     width: 120px;
     padding: 8px;
     font-size: 14px;
-    z-index: 1000;
 }
 
 /* Menu multiplayer */
 #multiplayerMenu {
     display: none;
-    position: fixed;
+    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -83,13 +82,21 @@ button { width: 100%; padding: 14px; margin-top: 12px; border: none; border-radi
     text-align: center;
     width: 90%;
     max-width: 400px;
-    z-index: 1000;
+}
+
+#playerNameContainer input {
+    width: 80%;
+    padding: 6px;
+    border-radius: 8px;
+    border: none;
+    margin-bottom: 8px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- Botão Multiplayer -->
 <button id="multiplayerBtn" onclick="openMultiplayerMenu()">Multiplayer</button>
 
 <div class="container" id="mainContainer">
@@ -119,11 +126,26 @@ button { width: 100%; padding: 14px; margin-top: 12px; border: none; border-radi
     <div class="score" id="scoreDiv"></div>
 </div>
 
+<!-- Menu Multiplayer -->
 <div id="multiplayerMenu">
     <h3>Multiplayer</h3>
     <button id="createRoomBtn" onclick="createRoom()">Criar Sala</button>
     <button id="joinRoomBtn" onclick="joinRoom()">Entrar Sala</button>
+
     <div style="margin-top:12px;">Sala ID: <span id="roomId">-</span></div>
+
+    <!-- Input nome -->
+    <div id="playerNameContainer" style="display:none; margin-top:12px;">
+        <input type="text" id="playerNameInput" placeholder="Digite seu nome"/>
+        <button onclick="enterName()">Entrar</button>
+    </div>
+
+    <!-- Lista de jogadores -->
+    <div id="playersList" style="display:none; margin-top:12px; text-align:left;">
+        <h4>Jogadores na sala:</h4>
+        <ul id="playersUl"></ul>
+    </div>
+
     <div id="roomActions" style="display:none; margin-top:16px;">
         <button id="restartBtn" onclick="reset()">Reiniciar</button>
         <button onclick="leaveRoom()">Sair da Sala</button>
@@ -131,6 +153,7 @@ button { width: 100%; padding: 14px; margin-top: 12px; border: none; border-radi
 </div>
 
 <script>
+/* ====== ELEMENTOS ====== */
 const status = document.getElementById("status");
 const mode = document.getElementById("mode");
 const scoreDiv = document.getElementById("scoreDiv");
@@ -142,56 +165,144 @@ const joinRoomBtn = document.getElementById("joinRoomBtn");
 const roomActions = document.getElementById("roomActions");
 const roomIdSpan = document.getElementById("roomId");
 const restartBtn = document.getElementById("restartBtn");
+const playerNameContainer = document.getElementById("playerNameContainer");
+const playersList = document.getElementById("playersList");
+const playersUl = document.getElementById("playersUl");
 
+/* ====== ESTADO ====== */
 let board = Array(9).fill("");
 let player = "X";
 let gameOver = false;
 let vsAI = false;
 let lock = false;
 let isCreator = false;
+let players = []; // lista local de jogadores
 
 let difficulties = ["Fácil", "Médio", "Difícil"];
 let difficultyIndex = 0;
-
 let score = JSON.parse(localStorage.getItem("score")) || {X:0,O:0,E:0};
-const wins = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-];
+const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
 updateScore();
 
-/* ====== JOGO ====== */
+/* ====== FUNÇÕES JOGO ====== */
 function play(i) {
     if (lock || board[i] || gameOver) return;
     move(i, player);
     if (checkEnd()) return;
-    player = player==="X"?"O":"X";
-    status.innerText = "Vez do "+player;
-    if(vsAI && player==="O"){lock=true; setTimeout(aiMove,400);}
+    player = player === "X" ? "O" : "X";
+    status.innerText = "Vez do " + player;
+    if (vsAI && player === "O") { lock = true; setTimeout(aiMove, 400); }
 }
-function move(i,p){board[i]=p; cells[i].innerText=p;}
-function aiMove(){let i = difficulties[difficultyIndex]==="Fácil"?randomMove():smartMove()??randomMove(); move(i,"O"); if(checkEnd())return; player="X"; status.innerText="Vez do X"; lock=false;}
-function randomMove(){const empty=board.map((v,i)=>v===""?i:null).filter(v=>v!==null); return empty[Math.floor(Math.random()*empty.length)];}
-function smartMove(){for(let c of wins){const vals=c.map(i=>board[i]); if(vals.filter(v=>v==="O").length===2 && vals.includes("")) return c[vals.indexOf("")];} for(let c of wins){const vals=c.map(i=>board[i]); if(vals.filter(v=>v==="X").length===2 && vals.includes("")) return c[vals.indexOf("")];} return null;}
-function checkEnd(){for(let c of wins){if(c.every(i=>board[i]===player)){status.innerText=player+" venceu!"; score[player]++; saveScore(); highlight(c); gameOver=true; lock=false; return true;}} if(!board.includes("")){status.innerText="Empate!"; score.E++; saveScore(); gameOver=true; lock=false; return true;} return false;}
-function highlight(cellsWin){cellsWin.forEach(i=>cells[i].classList.add("win"));}
+
+function move(i,p) { board[i]=p; cells[i].innerText=p; }
+
+function aiMove() {
+    let i;
+    if(difficulties[difficultyIndex]==="Fácil") i=randomMove();
+    else i=smartMove()??randomMove();
+    move(i,"O");
+    if(checkEnd()) return;
+    player="X";
+    status.innerText="Vez do X";
+    lock=false;
+}
+
+function randomMove() {
+    const empty=board.map((v,i)=>v===""?i:null).filter(v=>v!==null);
+    return empty[Math.floor(Math.random()*empty.length)];
+}
+
+function smartMove() {
+    for(let c of wins){ const vals=c.map(i=>board[i]); if(vals.filter(v=>"O"===v).length===2 && vals.includes("")) return c[vals.indexOf("")]; }
+    for(let c of wins){ const vals=c.map(i=>board[i]); if(vals.filter(v=>"X"===v).length===2 && vals.includes("")) return c[vals.indexOf("")]; }
+    return null;
+}
+
+function checkEnd() {
+    for(let c of wins){ if(c.every(i=>board[i]===player)){
+        status.innerText=player+" venceu!"; score[player]++; saveScore(); highlight(c); gameOver=true; lock=false; return true; 
+    }}
+    if(!board.includes("")){ status.innerText="Empate!"; score.E++; saveScore(); gameOver=true; lock=false; return true; }
+    return false;
+}
+
+function highlight(cellsWin){ cellsWin.forEach(i=>cells[i].classList.add("win")); }
 
 /* ====== CONTROLES ====== */
-function reset(){board.fill(""); gameOver=false; lock=false; player="X"; status.innerText="Vez do X"; Array.from(cells).forEach(c=>{c.innerText=""; c.classList.remove("win");});}
-function toggleMode(){vsAI=!vsAI; mode.innerText=vsAI?"Vs Computador":"2 Jogadores"; document.getElementById("difficultyBtn").style.display=vsAI?"block":"none"; reset();}
-function changeDifficulty(){difficultyIndex=(difficultyIndex+1)%difficulties.length; document.getElementById("difficulty").innerText=difficulties[difficultyIndex]; reset();}
+function reset() {
+    board.fill("");
+    gameOver=false; lock=false; player="X";
+    status.innerText="Vez do X";
+    Array.from(cells).forEach(c=>{c.innerText=""; c.classList.remove("win");});
+}
+
+function toggleMode() { vsAI=!vsAI; mode.innerText=vsAI?"Vs Computador":"2 Jogadores"; document.getElementById("difficultyBtn").style.display=vsAI?"block":"none"; reset(); }
+function changeDifficulty() { difficultyIndex=(difficultyIndex+1)%difficulties.length; document.getElementById("difficulty").innerText=difficulties[difficultyIndex]; reset(); }
 function toggleTheme(){document.body.classList.toggle("light");}
-function saveScore(){localStorage.setItem("score",JSON.stringify(score)); updateScore();}
-function updateScore(){scoreDiv.innerText=`X: ${score.X} | O: ${score.O} | Empates: ${score.E}`;}
+
+/* ====== SCORE ====== */
+function saveScore(){ localStorage.setItem("score",JSON.stringify(score)); updateScore(); }
+function updateScore(){ scoreDiv.innerText=`X: ${score.X} | O: ${score.O} | Empates: ${score.E}`; }
 
 /* ====== MULTIPLAYER ====== */
-function openMultiplayerMenu(){mainContainer.style.display="none"; multiplayerMenu.style.display="block";}
-function createRoom(){const id=Math.floor(Math.random()*100000); roomIdSpan.innerText=id; isCreator=true; createRoomBtn.style.display="none"; joinRoomBtn.style.display="none"; roomActions.style.display="block"; restartBtn.style.display="block";}
-function joinRoom(){const id=prompt("Digite o ID da sala:"); if(!id)return; roomIdSpan.innerText=id; isCreator=false; createRoomBtn.style.display="none"; joinRoomBtn.style.display="none"; roomActions.style.display="block"; restartBtn.style.display="none";}
-function leaveRoom(){multiplayerMenu.style.display="none"; mainContainer.style.display="block"; createRoomBtn.style.display="block"; joinRoomBtn.style.display="block"; roomActions.style.display="none";}
-</script>
+function openMultiplayerMenu(){
+    mainContainer.style.display="none";
+    multiplayerMenu.style.display="block";
+}
 
+function createRoom(){
+    const id=Math.floor(Math.random()*100000);
+    roomIdSpan.innerText=id;
+    isCreator=true;
+    createRoomBtn.style.display="none";
+    joinRoomBtn.style.display="none";
+    roomActions.style.display="block";
+    restartBtn.style.display="block";
+    playerNameContainer.style.display="block";
+}
+
+function joinRoom(){
+    const id=prompt("Digite o ID da sala:");
+    if(!id) return;
+    roomIdSpan.innerText=id;
+    isCreator=false;
+    createRoomBtn.style.display="none";
+    joinRoomBtn.style.display="none";
+    roomActions.style.display="block";
+    restartBtn.style.display="none";
+    playerNameContainer.style.display="block";
+}
+
+function enterName(){
+    const name=document.getElementById("playerNameInput").value.trim();
+    if(!name) return alert("Digite um nome!");
+    players.push(name);
+    updatePlayersList();
+    playerNameContainer.style.display="none";
+    playersList.style.display="block";
+}
+
+function updatePlayersList(){
+    playersUl.innerHTML="";
+    players.forEach(p=>{
+        const li=document.createElement("li");
+        li.textContent=p;
+        playersUl.appendChild(li);
+    });
+}
+
+function leaveRoom(){
+    multiplayerMenu.style.display="none";
+    mainContainer.style.display="block";
+    players=[];
+    playersList.style.display="none";
+    playersUl.innerHTML="";
+    playerNameContainer.style.display="none";
+    createRoomBtn.style.display="block";
+    joinRoomBtn.style.display="block";
+    roomActions.style.display="none";
+}
+</script>
 </body>
 </html>
