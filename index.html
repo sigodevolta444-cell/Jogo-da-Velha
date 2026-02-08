@@ -253,9 +253,16 @@ function checkEnd(b, boardType){
             status.innerText = player+" venceu!";
             score[player]++;
             saveScore();
-            gameOver=true;
-            lock=false;
-            showWinLine(c, boardType); // <<< chama a animação da linha
+            gameOver = true;
+            lock = false;
+
+            // Marca as células vencedoras
+            const cellsArr = boardType === 'board' ? boardCells : privateCells;
+            c.forEach(i => cellsArr[i].classList.add('win'));
+
+            // Desenha a linha animada
+            showWinLine(c, boardType);
+
             return true;
         }
     }
