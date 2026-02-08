@@ -5,114 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jogo da Velha Multiplayer</title>
 <style>
-:root {
-    --bg: #1e1e2f;
-    --card: #2a2a40;
-    --cell: #3a3a5c;
-    --text: #fff;
-    --btn: #0066ff;
-}
-.light {
-    --bg: #f2f2f2;
-    --card: #fff;
-    --cell: #ddd;
-    --text: #000;
-}
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    position: relative;
-}
-.container {
-    background: var(--card);
-    padding: 32px;
-    border-radius: 28px;
-    width: 95%;
-    max-width: 520px;
-    text-align: center;
-    position: relative;
-}
-.developer {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    font-size: 12px;
-    color: #ccc;
-}
-h2 { font-size: 28px; margin-top: 0; }
-#status { font-size: 22px; margin-bottom: 14px; }
-.board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; position: relative; }
-.cell { height: 120px; background: var(--cell); border-radius: 20px; font-size: 48px; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: pointer; }
-.cell.win { background: #00c853; color: white; }
-button { width: 100%; padding: 18px; margin-top: 14px; border: none; border-radius: 18px; background: var(--btn); color: white; font-size: 18px; cursor: pointer; }
-.score { font-size: 18px; margin-top: 18px; }
-#multiplayerBtn {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    width: 120px;
-    padding: 8px;
-    font-size: 14px;
-    z-index: 100;
-}
-#multiplayerMenu {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--card);
-    padding: 24px;
-    border-radius: 20px;
-    text-align: center;
-    width: 90%;
-    max-width: 400px;
-}
-#closeMenuBtn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: red;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-#privateRoom {
-    display: none;
-    background: var(--card);
-    padding: 24px;
-    border-radius: 20px;
-    text-align: center;
-    width: 95%;
-    max-width: 520px;
-}
-#playerList { margin-top: 12px; text-align: left; max-height: 120px; overflow-y: auto; background: #333; padding: 8px; border-radius: 12px; }
-
-/* Linha de Vitória Animada */
-.win-line {
-    position: absolute;
-    background: #00c853;
-    transform-origin: left center;
-    height: 6px;
-    width: 0;
-    animation: drawLine 0.5s forwards;
-    border-radius: 3px;
-    z-index: 10;
-}
-@keyframes drawLine {
-    from { width: 0; }
-    to { width: 100%; }
-}
+:root { --bg:#1e1e2f; --card:#2a2a40; --cell:#3a3a5c; --text:#fff; --btn:#0066ff; }
+.light { --bg:#f2f2f2; --card:#fff; --cell:#ddd; --text:#000; }
+body { margin:0; font-family:Arial,sans-serif; background:var(--bg); color:var(--text); display:flex; justify-content:center; align-items:center; min-height:100vh; position:relative; }
+.container { background:var(--card); padding:32px; border-radius:28px; width:95%; max-width:520px; text-align:center; position:relative; }
+.developer { position:absolute; top:16px; right:16px; font-size:12px; color:#ccc; }
+h2 { font-size:28px; margin-top:0; }
+#status { font-size:22px; margin-bottom:14px; }
+.board { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:24px 0; position:relative; }
+.cell { height:120px; background:var(--cell); border-radius:20px; font-size:48px; font-weight:bold; display:flex; justify-content:center; align-items:center; cursor:pointer; }
+.cell.win { background:#00c853; color:white; }
+button { width:100%; padding:18px; margin-top:14px; border:none; border-radius:18px; background:var(--btn); color:white; font-size:18px; cursor:pointer; }
+.score { font-size:18px; margin-top:18px; }
+#multiplayerBtn { position:absolute; top:16px; left:16px; width:120px; padding:8px; font-size:14px; z-index:100; }
+#multiplayerMenu { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--card); padding:24px; border-radius:20px; text-align:center; width:90%; max-width:400px; }
+#closeMenuBtn { position:absolute; top:8px; right:8px; background:red; color:white; border:none; border-radius:50%; width:28px; height:28px; font-weight:bold; cursor:pointer; }
+#privateRoom { display:none; background:var(--card); padding:24px; border-radius:20px; text-align:center; width:95%; max-width:520px; }
+#playerList { margin-top:12px; text-align:left; max-height:120px; overflow-y:auto; background:#333; padding:8px; border-radius:12px; }
+.win-line { position:absolute; background:#00c853; transform-origin:left center; height:6px; width:0; animation:drawLine 0.5s forwards; border-radius:3px; z-index:10; }
+@keyframes drawLine { from{width:0;} to{width:100%;} }
 </style>
 </head>
 <body>
@@ -120,61 +31,57 @@ button { width: 100%; padding: 18px; margin-top: 14px; border: none; border-radi
 <button id="multiplayerBtn" onclick="openMultiplayerMenu()">Multiplayer</button>
 
 <div class="container" id="mainContainer">
-    <h2>Jogo da Velha</h2>
-    <div class="developer">Desenvolvido por Gabriel Morito</div>
-    <div id="status">Vez do X</div>
+<h2>Jogo da Velha</h2>
+<div class="developer">Desenvolvido por Gabriel Morito</div>
+<div id="status">Vez do X</div>
 
-    <div class="board" id="board">
-        <div class="cell" onclick="play(0)"></div>
-        <div class="cell" onclick="play(1)"></div>
-        <div class="cell" onclick="play(2)"></div>
-        <div class="cell" onclick="play(3)"></div>
-        <div class="cell" onclick="play(4)"></div>
-        <div class="cell" onclick="play(5)"></div>
-        <div class="cell" onclick="play(6)"></div>
-        <div class="cell" onclick="play(7)"></div>
-        <div class="cell" onclick="play(8)"></div>
-    </div>
-
-    <button onclick="toggleMode()">Modo: <span id="mode">2 Jogadores</span></button>
-    <button id="difficultyBtn" onclick="changeDifficulty()" style="display:none">
-        Dificuldade: <span id="difficulty">Fácil</span>
-    </button>
-    <button onclick="toggleTheme()">Tema Claro / Escuro</button>
-    <button onclick="reset()">Reiniciar</button>
-
-    <div class="score" id="scoreDiv"></div>
+<div class="board" id="board">
+    <div class="cell" onclick="play(0)"></div>
+    <div class="cell" onclick="play(1)"></div>
+    <div class="cell" onclick="play(2)"></div>
+    <div class="cell" onclick="play(3)"></div>
+    <div class="cell" onclick="play(4)"></div>
+    <div class="cell" onclick="play(5)"></div>
+    <div class="cell" onclick="play(6)"></div>
+    <div class="cell" onclick="play(7)"></div>
+    <div class="cell" onclick="play(8)"></div>
 </div>
 
-<!-- Menu Multiplayer -->
+<button onclick="toggleMode()">Modo: <span id="mode">2 Jogadores</span></button>
+<button id="difficultyBtn" onclick="changeDifficulty()" style="display:none">Dificuldade: <span id="difficulty">Fácil</span></button>
+<button onclick="toggleTheme()">Tema Claro / Escuro</button>
+<button onclick="reset()">Reiniciar</button>
+<div class="score" id="scoreDiv"></div>
+</div>
+
+<!-- Multiplayer e Sala Privada -->
 <div id="multiplayerMenu">
-    <button id="closeMenuBtn" onclick="closeMultiplayerMenu()">X</button>
-    <h3>Multiplayer</h3>
-    <input type="text" id="playerNameInput" placeholder="Seu nome" style="width: 80%; padding: 6px; margin-bottom: 12px;">
-    <button id="createRoomBtn" onclick="createRoom()">Criar Sala</button>
-    <button id="joinRoomBtn" onclick="joinRoom()">Entrar Sala</button>
+<button id="closeMenuBtn" onclick="closeMultiplayerMenu()">X</button>
+<h3>Multiplayer</h3>
+<input type="text" id="playerNameInput" placeholder="Seu nome" style="width:80%;padding:6px;margin-bottom:12px;">
+<button onclick="createRoom()">Criar Sala</button>
+<button onclick="joinRoom()">Entrar Sala</button>
 </div>
 
-<!-- Sala Privada -->
 <div id="privateRoom">
-    <h3>Sala Privada</h3>
-    <div id="roomStatus">Sala ID: <span id="roomId">-</span></div>
-    <div class="board" id="privateBoard">
-        <div class="cell" onclick="playPrivate(0)"></div>
-        <div class="cell" onclick="playPrivate(1)"></div>
-        <div class="cell" onclick="playPrivate(2)"></div>
-        <div class="cell" onclick="playPrivate(3)"></div>
-        <div class="cell" onclick="playPrivate(4)"></div>
-        <div class="cell" onclick="playPrivate(5)"></div>
-        <div class="cell" onclick="playPrivate(6)"></div>
-        <div class="cell" onclick="playPrivate(7)"></div>
-        <div class="cell" onclick="playPrivate(8)"></div>
-    </div>
-    <div id="playerList">Jogadores:</div>
-    <div style="margin-top:12px;">
-        <button id="restartBtn" onclick="restartPrivateGame()" style="display:none;">Reiniciar</button>
-        <button onclick="leavePrivateRoom()">Sair da Sala</button>
-    </div>
+<h3>Sala Privada</h3>
+<div id="roomStatus">Sala ID: <span id="roomId">-</span></div>
+<div class="board" id="privateBoard">
+    <div class="cell" onclick="playPrivate(0)"></div>
+    <div class="cell" onclick="playPrivate(1)"></div>
+    <div class="cell" onclick="playPrivate(2)"></div>
+    <div class="cell" onclick="playPrivate(3)"></div>
+    <div class="cell" onclick="playPrivate(4)"></div>
+    <div class="cell" onclick="playPrivate(5)"></div>
+    <div class="cell" onclick="playPrivate(6)"></div>
+    <div class="cell" onclick="playPrivate(7)"></div>
+    <div class="cell" onclick="playPrivate(8)"></div>
+</div>
+<div id="playerList">Jogadores:</div>
+<div style="margin-top:12px;">
+<button id="restartBtn" onclick="restartPrivateGame()" style="display:none;">Reiniciar</button>
+<button onclick="leavePrivateRoom()">Sair da Sala</button>
+</div>
 </div>
 
 <script>
@@ -199,203 +106,131 @@ let vsAI = false;
 let lock = false;
 let isCreator = false;
 let players = [];
-let currentDifficulty = 0; // 0-Fácil,1-Médio,2-Difícil
+let currentDifficulty = 0;
 
 const wins = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
+[0,1,2],[3,4,5],[6,7,8],
+[0,3,6],[1,4,7],[2,5,8],
+[0,4,8],[2,4,6]
 ];
 
-let score = JSON.parse(localStorage.getItem("score")) || {X:0,O:0,E:0};
+let score = JSON.parse(localStorage.getItem("score"))||{X:0,O:0,E:0};
 updateScore();
 
-// ===== Linha de vitória =====
 function showWinLine(cells, boardType){
     const boardDiv = boardType==='board'?document.getElementById('board'):document.getElementById('privateBoard');
     const firstCell = boardDiv.children[cells[0]];
     const lastCell = boardDiv.children[cells[2]];
     const line = document.createElement('div'); line.classList.add('win-line');
-
     const rect1 = firstCell.getBoundingClientRect();
     const rect2 = lastCell.getBoundingClientRect();
     const boardRect = boardDiv.getBoundingClientRect();
-
     const x1 = rect1.left + rect1.width/2 - boardRect.left;
     const y1 = rect1.top + rect1.height/2 - boardRect.top;
     const x2 = rect2.left + rect2.width/2 - boardRect.left;
     const y2 = rect2.top + rect2.height/2 - boardRect.top;
-
     const length = Math.hypot(x2-x1, y2-y1);
     const angle = Math.atan2(y2-y1, x2-x1)*180/Math.PI;
-
     line.style.width = length+'px';
     line.style.transform = `rotate(${angle}deg)`;
     line.style.top = y1+'px';
     line.style.left = x1+'px';
     boardDiv.appendChild(line);
-
     cells.forEach(i=>boardDiv.children[i].classList.add('win'));
 }
 
-// ===== Jogo offline =====
-function play(i){
-    if(lock || board[i] || gameOver) return;
-    board[i] = player;
-    boardCells[i].innerText = player;
+// ===== AI Play =====
+function aiPlay(){
+    if(gameOver) return;
+    const emptyCells = board.map((v,i)=>v===''?i:null).filter(i=>i!==null);
+    if(emptyCells.length===0) return;
+
+    let choice;
+    if(currentDifficulty===0){ // Fácil
+        choice = emptyCells[Math.floor(Math.random()*emptyCells.length)];
+    } else if(currentDifficulty===1){ // Médio
+        choice = mediumAI(emptyCells);
+    } else { // Difícil
+        choice = hardAI(board); // usa Minimax
+    }
+
+    board[choice]='O'; boardCells[choice].innerText='O';
     if(checkEnd(board,'board')) return;
+    player='X'; status.innerText='Vez do '+player;
+}
 
-    if(vsAI && player==='X'){
-        player='O'; status.innerText='Vez do O';
-        setTimeout(aiPlay,300);
-    } else {
-        player = player==='X'?'O':'X';
-        status.innerText='Vez do '+player;
+function mediumAI(empty){
+    // Tenta ganhar
+    for(let i of empty){
+        board[i]='O'; if(checkEnd(board,'board')){board[i]=''; return i;} board[i]='';
     }
-}
-
-function checkEnd(b, boardType){
-    for(let c of wins){
-        if(c.every(i=>b[i]===player)){
-            status.innerText = player+' venceu!';
-            score[player]++;
-            saveScore();
-            gameOver=true;
-            lock=false;
-            showWinLine(c,boardType);
-            return true;
-        }
+    // Tenta bloquear
+    for(let i of empty){
+        board[i]='X'; if(checkEnd(board,'board')){board[i]=''; return i;} board[i]='';
     }
-    if(!b.includes("")){
-        status.innerText='Empate!';
-        score.E++;
-        saveScore();
-        gameOver=true;
-        lock=false;
-        return true;
-    }
-    return false;
+    // Aleatório
+    return empty[Math.floor(Math.random()*empty.length)];
 }
 
-function saveScore(){ localStorage.setItem("score",JSON.stringify(score)); updateScore(); }
-function updateScore(){ scoreDiv.innerText=`X: ${score.X} | O: ${score.O} | Empates: ${score.E}`; }
-function toggleMode(){ 
-    vsAI=!vsAI; 
-    mode.innerText = vsAI?'Vs Computador':'2 Jogadores'; 
-    document.getElementById("difficultyBtn").style.display = vsAI?'block':'none'; 
-    reset();
-}
-function toggleTheme(){ document.body.classList.toggle("light"); }
-function clearWinLines(boardType){
-    const boardDiv = boardType==='board'?document.getElementById('board'):document.getElementById('privateBoard');
-    boardDiv.querySelectorAll('.win-line').forEach(line=>line.remove());
-}
-function reset(){
-    board.fill(""); privateBoardArr.fill(""); gameOver=false; lock=false; player='X';
-    boardCells.forEach(c=>{c.innerText='';c.classList.remove('win');});
-    privateCells.forEach(c=>{c.innerText='';c.classList.remove('win');});
-    clearWinLines('board'); clearWinLines('privateBoard');
-    status.innerText='Vez do X';
+function hardAI(b){
+    const copy = [...b];
+    const move = minimax(copy,"O");
+    return move.index;
 }
 
-// ===== Difícil (Minimax) =====
-function hardAI() {
-    const bestMove = minimax(board, "O").index;
-    return bestMove; // Retorna o índice para aiPlay usar
-}
+// ===== Minimax =====
+function minimax(newBoard,currentPlayer){
+    const availSpots = newBoard.map((v,i)=>v===""?i:null).filter(i=>i!==null);
 
-// Função Minimax
-function minimax(newBoard, currentPlayer) {
-    const availSpots = newBoard.map((v,i) => v === "" ? i : null).filter(i => i !== null);
-
-    // Checa vitória
-    if(checkWin(newBoard, "X")) return {score: -10};
-    if(checkWin(newBoard, "O")) return {score: 10};
-    if(availSpots.length === 0) return {score: 0};
+    if(checkWin(newBoard,"X")) return {score:-10};
+    if(checkWin(newBoard,"O")) return {score:10};
+    if(availSpots.length===0) return {score:0};
 
     const moves = [];
-
-    for(let i = 0; i < availSpots.length; i++) {
-        const move = {};
-        move.index = availSpots[i];
-        newBoard[availSpots[i]] = currentPlayer;
-
-        if(currentPlayer === "O") {
-            const result = minimax(newBoard, "X");
-            move.score = result.score;
-        } else {
-            const result = minimax(newBoard, "O");
-            move.score = result.score;
-        }
-
-        newBoard[availSpots[i]] = "";
+    for(let i of availSpots){
+        const move={};
+        move.index=i;
+        newBoard[i]=currentPlayer;
+        const result = minimax(newBoard,currentPlayer==="O"?"X":"O");
+        move.score=result.score;
+        newBoard[i]="";
         moves.push(move);
     }
 
     let bestMove;
-    if(currentPlayer === "O") {
-        let bestScore = -Infinity;
-        for(let i=0;i<moves.length;i++){
-            if(moves[i].score > bestScore){ bestScore = moves[i].score; bestMove = moves[i]; }
-        }
+    if(currentPlayer==="O"){
+        let bestScore=-Infinity;
+        for(let m of moves) if(m.score>bestScore){ bestScore=m.score; bestMove=m; }
     } else {
-        let bestScore = Infinity;
-        for(let i=0;i<moves.length;i++){
-            if(moves[i].score < bestScore){ bestScore = moves[i].score; bestMove = moves[i]; }
-        }
+        let bestScore=Infinity;
+        for(let m of moves) if(m.score<bestScore){ bestScore=m.score; bestMove=m; }
     }
-
     return bestMove;
 }
 
-// Função para verificar vitória dentro do Minimax
-function checkWin(boardToCheck, playerToCheck){
-    return [
-        [0,1,2],[3,4,5],[6,7,8],
-        [0,3,6],[1,4,7],[2,5,8],
-        [0,4,8],[2,4,6]
-    ].some(line => line.every(i => boardToCheck[i] === playerToCheck));
-}
-// ===== Multiplayer =====
+function checkWin(b,p){ return wins.some(line=>line.every(i=>b[i]===p)); }
+
+// ===== Offline/Multiplayer =====
+function play(i){ if(lock||board[i]||gameOver) return; board[i]=player; boardCells[i].innerText=player; if(checkEnd(board,'board')) return; if(vsAI&&player==='X'){ player='O'; status.innerText='Vez do O'; setTimeout(aiPlay,300); } else{ player=player==='X'?'O':'X'; status.innerText='Vez do '+player; } }
+function checkEnd(b,boardType){ for(let c of wins){ if(c.every(i=>b[i]===player)){ status.innerText=player+' venceu!'; score[player]++; saveScore(); gameOver=true; lock=false; showWinLine(c,boardType); return true; } } if(!b.includes("")){ status.innerText='Empate!'; score.E++; saveScore(); gameOver=true; lock=false; return true; } return false; }
+function saveScore(){ localStorage.setItem("score",JSON.stringify(score)); updateScore(); }
+function updateScore(){ scoreDiv.innerText=`X: ${score.X} | O: ${score.O} | Empates: ${score.E}`; }
+function toggleMode(){ vsAI=!vsAI; mode.innerText=vsAI?'Vs Computador':'2 Jogadores'; document.getElementById("difficultyBtn").style.display=vsAI?'block':'none'; reset(); }
+function toggleTheme(){ document.body.classList.toggle("light"); }
+function clearWinLines(boardType){ const boardDiv = boardType==='board'?document.getElementById('board'):document.getElementById('privateBoard'); boardDiv.querySelectorAll('.win-line').forEach(l=>l.remove()); }
+function reset(){ board.fill(""); privateBoardArr.fill(""); gameOver=false; lock=false; player='X'; boardCells.forEach(c=>{c.innerText=''; c.classList.remove('win');}); privateCells.forEach(c=>{c.innerText=''; c.classList.remove('win');}); clearWinLines('board'); clearWinLines('privateBoard'); status.innerText='Vez do X'; }
+function changeDifficulty(){ currentDifficulty=(currentDifficulty+1)%3; const levels=['Fácil','Médio','Difícil']; document.getElementById("difficulty").innerText=levels[currentDifficulty]; }
+
+// ===== Multiplayer funções =====
 function openMultiplayerMenu(){ multiplayerMenu.style.display='block'; mainContainer.style.display='none'; privateRoom.style.display='none'; }
 function closeMultiplayerMenu(){ multiplayerMenu.style.display='none'; mainContainer.style.display='flex'; }
-function createRoom(){
-    const id=Math.floor(Math.random()*100000); roomIdSpan.innerText=id; isCreator=true;
-    privateRoom.style.display='block'; multiplayerMenu.style.display='none';
-    restartBtn.style.display='inline-block'; addPlayer(playerNameInput.value||"Player 1");
-}
-function joinRoom(){
-    const id=prompt("Digite o ID da sala:"); if(!id) return;
-    roomIdSpan.innerText=id; isCreator=false;
-    privateRoom.style.display='block'; multiplayerMenu.style.display='none';
-    restartBtn.style.display='none'; addPlayer(playerNameInput.value||"Player 2");
-}
-function leavePrivateRoom(){
-    privateRoom.style.display='none'; mainContainer.style.display='flex';
-    board.fill(""); privateBoardArr.fill(""); boardCells.forEach(c=>c.innerText=''); privateCells.forEach(c=>c.innerText='');
-    document.querySelectorAll(".win-line").forEach(l=>l.remove());
-    players=[]; updatePlayerList();
-}
+function createRoom(){ const id=Math.floor(Math.random()*100000); roomIdSpan.innerText=id; isCreator=true; privateRoom.style.display='block'; multiplayerMenu.style.display='none'; restartBtn.style.display='inline-block'; addPlayer(playerNameInput.value||"Player 1"); }
+function joinRoom(){ const id=prompt("Digite o ID da sala:"); if(!id) return; roomIdSpan.innerText=id; isCreator=false; privateRoom.style.display='block'; multiplayerMenu.style.display='none'; restartBtn.style.display='none'; addPlayer(playerNameInput.value||"Player 2"); }
+function leavePrivateRoom(){ privateRoom.style.display='none'; mainContainer.style.display='flex'; board.fill(""); privateBoardArr.fill(""); boardCells.forEach(c=>c.innerText=''); privateCells.forEach(c=>c.innerText=''); document.querySelectorAll(".win-line").forEach(l=>l.remove()); players=[]; updatePlayerList(); }
 function addPlayer(name){ if(name && !players.includes(name)) players.push(name); updatePlayerList(); }
 function updatePlayerList(){ playerListDiv.innerHTML="Jogadores:<br>"+players.join("<br>"); }
-function playPrivate(i){
-    if(privateBoardArr[i] || gameOver) return;
-    privateBoardArr[i]=player; privateCells[i].innerText=player;
-    if(checkEnd(privateBoardArr,'privateBoard')) return;
-    player = player==='X'?'O':'X';
-    status.innerText='Vez do '+player;
-}
-function restartPrivateGame(){
-    if(!isCreator) return;
-    privateBoardArr.fill(""); privateCells.forEach(c=>c.innerText=''); document.querySelectorAll(".win-line").forEach(l=>l.remove()); gameOver=false;
-}
-
-// ===== Dificuldade =====
-function changeDifficulty(){
-    currentDifficulty = (currentDifficulty+1)%3;
-    const levels=['Fácil','Médio','Difícil'];
-    document.getElementById("difficulty").innerText = levels[currentDifficulty];
-}
+function playPrivate(i){ if(privateBoardArr[i]||gameOver) return; privateBoardArr[i]=player; privateCells[i].innerText=player; if(checkEnd(privateBoardArr,'privateBoard')) return; player=player==='X'?'O':'X'; status.innerText='Vez do '+player; }
+function restartPrivateGame(){ if(!isCreator) return; privateBoardArr.fill(""); privateCells.forEach(c=>c.innerText=''); document.querySelectorAll(".win-line").forEach(l=>l.remove()); gameOver=false; }
 </script>
 </body>
 </html>
