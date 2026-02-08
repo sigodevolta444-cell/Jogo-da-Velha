@@ -235,6 +235,9 @@ function showWinLine(cells, boardType) {
     line.style.top = y1 + 'px';
     line.style.left = x1 + 'px';
     boardDiv.appendChild(line);
+
+    // Tornar as 3 células verdes
+    cells.forEach(i => boardDiv.children[i].classList.add('win'));
 }
 
 // ===================== Jogo offline =====================
@@ -253,16 +256,9 @@ function checkEnd(b, boardType){
             status.innerText = player+" venceu!";
             score[player]++;
             saveScore();
-            gameOver = true;
-            lock = false;
-
-            // Marca as células vencedoras
-            const cellsArr = boardType === 'board' ? boardCells : privateCells;
-            c.forEach(i => cellsArr[i].classList.add('win'));
-
-            // Desenha a linha animada
-            showWinLine(c, boardType);
-
+            gameOver=true;
+            lock=false;
+            showWinLine(c, boardType); // anima linha e células verdes
             return true;
         }
     }
@@ -281,7 +277,36 @@ function saveScore(){ localStorage.setItem("score", JSON.stringify(score)); upda
 function updateScore(){ scoreDiv.innerText=`X: ${score.X} | O: ${score.O} | Empates: ${score.E}`;}
 function toggleMode(){ vsAI=!vsAI; mode.innerText=vsAI?"Vs Computador":"2 Jogadores"; document.getElementById("difficultyBtn").style.display = vsAI?"block":"none"; reset();}
 function toggleTheme(){ document.body.classList.toggle("light"); }
-function reset(){ board.fill(""); privateBoardArr.fill(""); gameOver=false; lock=false; player="X"; boardCells.forEach(c=>c.innerText=""); privateCells.forEach(c=>c.innerText=""); }
+
+// ===== Reinício completo =====
+function reset(){
+    board.fill(""); 
+    privateBoardArr.fill(""); 
+    gameOver=false; 
+    lock=false; 
+    player="X";
+
+    boardCells.forEach(c=>{
+        c.innerText=""; 
+        c.classList.remove("win");
+    });
+    privateCells.forEach(c=>{
+        c.innerText=""; 
+        c.classList.remove("win");
+    });
+
+    document.querySelectorAll(".win-line").forEach(line=>line.remove());
+    status.innerText = "Vez do X";
+}
+
+// ===== Dificuldade =====
+let difficultyLevels = ["Fácil", "Médio", "Difícil"];
+let currentDifficulty = 0;
+
+function changeDifficulty(){
+    currentDifficulty = (currentDifficulty + 1) % difficultyLevels.length;
+    document.getElementById("difficulty").innerText = difficultyLevels[currentDifficulty];
+}
 
 // ===================== Multiplayer =====================
 function openMultiplayerMenu(){ multiplayerMenu.style.display="block"; mainContainer.style.display="none"; privateRoom.style.display="none"; }
@@ -310,6 +335,7 @@ function leavePrivateRoom(){
     mainContainer.style.display="flex";
     board.fill(""); privateBoardArr.fill("");
     boardCells.forEach(c=>c.innerText=""); privateCells.forEach(c=>c.innerText="");
+    document.querySelectorAll(".win-line").forEach(line=>line.remove());
     players=[];
     updatePlayerList();
 }
@@ -326,7 +352,8 @@ function playPrivate(i){
 function restartPrivateGame(){
     if(!isCreator) return;
     privateBoardArr.fill("");
-    privateCells.forEach(c=>c.innerText="");
+    privateCells.forEach(c=>c.innerText=""); 
+    document.querySelectorAll(".win-line").forEach(line=>line.remove());
     gameOver=false;
 }
 </script>
