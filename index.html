@@ -25,8 +25,6 @@ button { width:100%; padding:18px; margin-top:14px; border:none; border-radius:1
 .win-line { position:absolute; background:#00c853; transform-origin:left center; height:6px; width:0; animation:drawLine 0.5s forwards; border-radius:3px; z-index:10; }
 @keyframes drawLine { from{width:0;} to{width:100%;} }
 </style>
-<!-- SDK do Parse -->
-<script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
 </head>
 <body>
 
@@ -56,6 +54,7 @@ button { width:100%; padding:18px; margin-top:14px; border:none; border-radius:1
 <div class="score" id="scoreDiv"></div>
 </div>
 
+<!-- Multiplayer e Sala Privada -->
 <div id="multiplayerMenu">
 <button id="closeMenuBtn" onclick="closeMultiplayerMenu()">X</button>
 <h3>Multiplayer</h3>
@@ -85,10 +84,12 @@ button { width:100%; padding:18px; margin-top:14px; border:none; border-radius:1
 </div>
 </div>
 
+<!-- Parse SDK -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/parse/3.4.4/parse.min.js"></script>
+
 <script>
-// Inicializar Parse
-Parse.initialize("e8nEnz0sw5ezqx09VktYY87vG6DsjP4jhZt9fUbQ", ""); // <-- App ID
-Parse.serverURL = 'https://parseapi.back4app.com/';
+Parse.initialize("e8nEnz0sw5ezqx09VktYY87vG6DsjP4jhZt9fUbQ");
+Parse.serverURL = 'https://parseapi.back4app.com';
 
 const status = document.getElementById("status");
 const mode = document.getElementById("mode");
@@ -112,7 +113,7 @@ let lock = false;
 let isCreator = false;
 let players = [];
 let currentDifficulty = 0;
-let currentRoom; // Parse object da sala
+let currentRoom = null;
 
 const wins = [
 [0,1,2],[3,4,5],[6,7,8],
@@ -123,120 +124,167 @@ const wins = [
 let score = JSON.parse(localStorage.getItem("score"))||{X:0,O:0,E:0};
 updateScore();
 
-// ================= Funções Parse =================
+function showWinLine(cells, boardType){
+    const boardDiv = boardType==='board'?document.getElementById('board'):document.getElementById('privateBoard');
+    const firstCell = boardDiv.children[cells[0]];
+    const lastCell = boardDiv.children[cells[2]];
+    const line = document.createElement('div'); line.classList.add('win-line');
+    const rect1 = firstCell.getBoundingClientRect();
+    const rect2 = lastCell.getBoundingClientRect();
+    const boardRect = boardDiv.getBoundingClientRect();
+    const x1 = rect1.left + rect1.width/2 - boardRect.left;
+    const y1 = rect1.top + rect1.height/2 - boardRect.top;
+    const x2 = rect2.left + rect2.width/2 - boardRect.left;
+    const y2 = rect2.top + rect2.height/2 - boardRect.top;
+    const length = Math.hypot(x2-x1, y2-y1);
+    const angle = Math.atan2(y2-y1, x2-x1)*180/Math.PI;
+    line.style.width = length+'px';
+    line.style.transform = `rotate(${angle}deg)`;
+    line.style.top = y1+'px';
+    line.style.left = x1+'px';
+    boardDiv.appendChild(line);
+    cells.forEach(i=>boardDiv.children[i].classList.add('win'));
+}
+
+// ===== AI / Offline =====
+function aiPlay(){ if(gameOver) return; const emptyCells = board.map((v,i)=>v===''?i:null).filter(i=>i!==null); if(emptyCells.length===0) return; let choice; if(currentDifficulty===0){ choice = emptyCells[Math.floor(Math.random()*emptyCells.length)]; } else if(currentDifficulty===1){ choice = mediumAI(emptyCells); } else { choice = hardAI(board); } board[choice]='O'; boardCells[choice].innerText='O'; if(checkEnd(board,'board')) return; player='X'; status.innerText='Vez do '+player; }
+function mediumAI(empty){ for(let i of empty){ board[i]='O'; if(checkEnd(board,'board')){board[i]=''; return i;} board[i]=''; } for(let i of empty){ board[i]='X'; if(checkEnd(board,'board')){board[i]=''; return i;} board[i]=''; } return empty[Math.floor(Math.random()*empty.length)]; }
+function hardAI(b){ const copy=[...b]; return minimax(copy,"O").index; }
+function minimax(newBoard,currentPlayer){ const availSpots=newBoard.map((v,i)=>v===""?i:null).filter(i=>i!==null); if(checkWin(newBoard,"X")) return {score:-10}; if(checkWin(newBoard,"O")) return {score:10}; if(availSpots.length===0) return {score:0}; const moves=[]; for(let i of availSpots){ const move={}; move.index=i; newBoard[i]=currentPlayer; const result=minimax(newBoard,currentPlayer==="O"?"X":"O"); move.score=result.score; newBoard[i]=""; moves.push(move); } let bestMove; if(currentPlayer==="O"){ let bestScore=-Infinity; for(let m of moves) if(m.score>bestScore){ bestScore=m.score; bestMove=m; } } else { let bestScore=Infinity; for(let m of moves) if(m.score<bestScore){ bestScore=m.score; bestMove=m; } } return bestMove; }
+function checkWin(b,p){ return wins.some(line=>line.every(i=>b[i]===p)); }
+
+// ===== Offline/Multiplayer =====
+function play(i){ if(lock||board[i]||gameOver) return; board[i]=player; boardCells[i].innerText=player; if(checkEnd(board,'board')) return; if(vsAI&&player==='X'){ player='O'; status.innerText='Vez do O'; setTimeout(aiPlay,300); } else{ player=player==='X'?'O':'X'; status.innerText='Vez do '+player; } }
+function checkEnd(b,boardType){ for(let c of wins){ if(c.every(i=>b[i]===player)){ status.innerText=player+' venceu!'; score[player]++; saveScore(); gameOver=true; lock=false; showWinLine(c,boardType); return true; } } if(!b.includes("")){ status.innerText='Empate!'; score.E++; saveScore(); gameOver=true; lock=false; return true; } return false; }
+function saveScore(){ localStorage.setItem("score",JSON.stringify(score)); updateScore(); }
+function updateScore(){ scoreDiv.innerText=`X: ${score.X} | O: ${score.O} | Empates: ${score.E}`; }
+function toggleMode(){ vsAI=!vsAI; mode.innerText=vsAI?'Vs Computador':'2 Jogadores'; document.getElementById("difficultyBtn").style.display=vsAI?'block':'none'; reset(); }
+function toggleTheme(){ document.body.classList.toggle("light"); }
+function clearWinLines(boardType){ const boardDiv = boardType==='board'?document.getElementById('board'):document.getElementById('privateBoard'); boardDiv.querySelectorAll('.win-line').forEach(l=>l.remove()); }
+function reset(){ board.fill(""); privateBoardArr.fill(""); gameOver=false; lock=false; player='X'; boardCells.forEach(c=>{c.innerText=''; c.classList.remove('win');}); privateCells.forEach(c=>{c.innerText=''; c.classList.remove('win');}); clearWinLines('board'); clearWinLines('privateBoard'); status.innerText='Vez do X'; }
+function changeDifficulty(){ currentDifficulty=(currentDifficulty+1)%3; const levels=['Fácil','Médio','Difícil']; document.getElementById("difficulty").innerText=levels[currentDifficulty]; }
+
+// ===== Multiplayer funções =====
+function openMultiplayerMenu(){ multiplayerMenu.style.display='block'; mainContainer.style.display='none'; privateRoom.style.display='none'; }
+function closeMultiplayerMenu(){ multiplayerMenu.style.display='none'; mainContainer.style.display='flex'; }
+
 async function createRoom(){
-    const roomId = Math.floor(Math.random()*100000).toString();
-    roomIdSpan.innerText = roomId;
-    isCreator = true;
-    privateRoom.style.display = 'block';
-    multiplayerMenu.style.display = 'none';
-    restartBtn.style.display = 'inline-block';
-
-    const Multiplayer = Parse.Object.extend("Multiplayer");
-    const room = new Multiplayer();
-    room.set("roomId", roomId);
-    room.set("board", Array(9).fill(""));
-    room.set("players", [playerNameInput.value||"Player 1"]);
-    room.set("turn", "X");
-    room.set("status", "em andamento");
+    const Rooms = Parse.Object.extend("Rooms");
+    const room = new Rooms();
+    room.set("roomId", Math.floor(Math.random()*100000));
+    room.set("players",[playerNameInput.value||"Player 1"]);
+    room.set("currentPlayer","X");
+    room.set("board",Array(9).fill(""));
+    room.set("status","aguardando");
+    room.set("winner","");
     await room.save();
-
     currentRoom = room;
-    subscribeRoom(roomId);
+    roomIdSpan.innerText = room.get("roomId");
+    isCreator = true;
+    privateRoom.style.display='block';
+    multiplayerMenu.style.display='none';
+    restartBtn.style.display='inline-block';
+    subscribeRoom(room);
+    updatePlayerListRealtime();
 }
 
 async function joinRoom(){
     const id = prompt("Digite o ID da sala:");
     if(!id) return;
-    roomIdSpan.innerText = id;
-    isCreator = false;
-    privateRoom.style.display = 'block';
-    multiplayerMenu.style.display = 'none';
-    restartBtn.style.display = 'none';
-
-    const query = new Parse.Query("Multiplayer");
-    query.equalTo("roomId", id);
+    const Rooms = Parse.Object.extend("Rooms");
+    const query = new Parse.Query(Rooms);
+    query.equalTo("roomId", Number(id));
     const room = await query.first();
-    if(!room){ alert("Sala não encontrada"); return; }
-
-    let pl = room.get("players");
-    pl.push(playerNameInput.value||"Player 2");
-    room.set("players", pl);
-    await room.save();
-
+    if(!room){ alert("Sala não encontrada!"); return; }
     currentRoom = room;
-    subscribeRoom(id);
+    let playersArr = room.get("players");
+    playersArr.push(playerNameInput.value||"Player 2");
+    room.set("players",playersArr);
+    room.set("status","em jogo");
+    await room.save();
+    roomIdSpan.innerText = room.get("roomId");
+    isCreator=false;
+    privateRoom.style.display='block';
+    multiplayerMenu.style.display='none';
+    restartBtn.style.display='none';
+    subscribeRoom(room);
+    updatePlayerListRealtime();
 }
 
-// Subscrição em tempo real
-function subscribeRoom(roomId){
-    const query = new Parse.Query("Multiplayer");
-    query.equalTo("roomId", roomId);
+function leavePrivateRoom(){
+    if(currentRoom){
+        const playersArr = currentRoom.get("players").filter(p=>p!==playerNameInput.value);
+        currentRoom.set("players",playersArr);
+        currentRoom.save();
+        currentRoom=null;
+    }
+    privateRoom.style.display='none';
+    mainContainer.style.display='flex';
+    reset();
+    players=[];
+    updatePlayerList();
+}
+
+function addPlayer(name){
+    if(name && !players.includes(name)) players.push(name);
+    updatePlayerList();
+}
+
+function updatePlayerList(){
+    playerListDiv.innerHTML="Jogadores:<br>"+players.join("<br>");
+}
+
+function updatePlayerListRealtime(){
+    if(!currentRoom) return;
+    players = currentRoom.get("players");
+    updatePlayerList();
+}
+
+function subscribeRoom(room){
+    const query = new Parse.Query("Rooms");
+    query.equalTo("objectId",room.id);
     const subscription = query.subscribe();
-    subscription.on('update', (object) => {
-        const data = object.toJSON();
-        players = data.players;
+    subscription.on('update', obj=>{
+        if(obj.id !== room.id) return;
+        currentRoom = obj;
+        privateBoardArr = obj.get("board");
+        privateCells.forEach((c,i)=>{ c.innerText = privateBoardArr[i]; });
+        players = obj.get("players");
         updatePlayerList();
-        privateBoardArr = data.board;
-        privateBoardArr.forEach((v,i)=>privateCells[i].innerText=v);
-        player = data.turn;
-        status.innerText = data.status==='em andamento'?`Vez do ${player}`:data.status;
+        player = obj.get("currentPlayer");
+        status.innerText = "Vez do " + player;
+        if(obj.get("status")==="finalizado") gameOver=true;
     });
 }
 
-// Atualizar jogadores visuais
-function updatePlayerList(){ playerListDiv.innerHTML="Jogadores:<br>"+players.join("<br>"); }
-
-// ================= Resto do código offline e AI =================
-// (Mesma lógica que você já tinha, não mexe)
-function showWinLine(cells, boardType){ /* ... */ }
-function play(i){ /* ... */ }
-function checkEnd(b,boardType){ /* ... */ }
-function saveScore(){ /* ... */ }
-function updateScore(){ /* ... */ }
-function toggleMode(){ /* ... */ }
-function toggleTheme(){ /* ... */ }
-function clearWinLines(boardType){ /* ... */ }
-function reset(){ /* ... */ }
-function changeDifficulty(){ /* ... */ }
-
-// ================= Multiplayer UI =================
-function openMultiplayerMenu(){ multiplayerMenu.style.display='block'; mainContainer.style.display='none'; privateRoom.style.display='none'; }
-function closeMultiplayerMenu(){ multiplayerMenu.style.display='none'; mainContainer.style.display='flex'; }
-function leavePrivateRoom(){
-    privateRoom.style.display='none';
-    mainContainer.style.display='flex';
-    board.fill(""); privateBoardArr.fill("");
-    boardCells.forEach(c=>c.innerText=''); privateCells.forEach(c=>c.innerText=''); 
-    document.querySelectorAll(".win-line").forEach(l=>l.remove());
-    players=[]; updatePlayerList();
-    if(currentRoom) currentRoom.destroy(); // remove sala
-}
 function playPrivate(i){
-    if(privateBoardArr[i]||gameOver||!currentRoom) return;
+    if(!currentRoom) return;
+    if(privateBoardArr[i]||gameOver) return;
     privateBoardArr[i]=player;
     privateCells[i].innerText=player;
+    currentRoom.set("board",privateBoardArr);
+    currentRoom.set("currentPlayer", player==='X'?'O':'X');
 
-    const nextTurn = player==='X'?'O':'X';
-    player = nextTurn;
-
-    // Atualiza no Back4App
-    currentRoom.set("board", privateBoardArr);
-    currentRoom.set("turn", player);
+    if(checkEnd(privateBoardArr,'privateBoard')){
+        currentRoom.set("status","finalizado");
+        currentRoom.set("winner",player);
+    }
     currentRoom.save();
+    player = player==='X'?'O':'X';
+    status.innerText='Vez do '+player;
 }
+
 function restartPrivateGame(){
-    if(!isCreator) return;
+    if(!isCreator || !currentRoom) return;
     privateBoardArr.fill("");
-    privateCells.forEach(c=>c.innerText=''); 
+    privateCells.forEach(c=>{c.innerText=''; c.classList.remove('win');});
     document.querySelectorAll(".win-line").forEach(l=>l.remove());
     gameOver=false;
-    if(currentRoom){
-        currentRoom.set("board", privateBoardArr);
-        currentRoom.set("turn", "X");
-        currentRoom.set("status", "em andamento");
-        currentRoom.save();
-    }
+    currentRoom.set("board",privateBoardArr);
+    currentRoom.set("status","aguardando");
+    currentRoom.set("winner","");
+    currentRoom.set("currentPlayer","X");
+    currentRoom.save();
 }
 </script>
 </body>
